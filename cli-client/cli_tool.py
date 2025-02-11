@@ -3,6 +3,7 @@ import requests
 import json
 import csv
 import os
+import pandas as pd
 
 API_BASE_URL = "http://127.0.0.1:9115"
 DEFAULT_FORMAT = "csv"
@@ -25,36 +26,20 @@ def delete_token():
 def print_output(data, output_format):
     if output_format == "json":
         print(json.dumps(data, indent=4))
-    else:  # Default to CSV
-        if isinstance(data, dict) and "passList" in data:
-            pass_list = data["passList"]
-            if pass_list:
-                keys = pass_list[0].keys()
-                with open("output.csv", "w", newline="", encoding="utf-8") as file:
-                    writer = csv.DictWriter(file, fieldnames=keys)
-                    writer.writeheader()
-                    writer.writerows(pass_list)
-                print("CSV output saved to output.csv")
-            else:
-                print("No pass data available.")
-        elif isinstance(data, dict) and "vOpList" in data:
-            with open("output.csv", "w", newline="", encoding="utf-8") as file:
-                writer = csv.DictWriter(
-                    file,
-                    fieldnames=["periodFrom", "periodTo", "requestTimestamp", "tollOpID", "visitingOpID", "nPasses", "passesCost"]
-                )
-                writer.writeheader()
-                for row in data["vOpList"]:
-                    writer.writerow({
-                        "periodFrom": data["periodFrom"],
-                        "periodTo": data["periodTo"],
-                        "requestTimestamp": data["requestTimestamp"],
-                        "tollOpID": data["tollOpID"],
-                        **row  # Add visitingOpID, nPasses, passesCost
-                    })
-            print("CSV output saved to output.csv")
-        else:
-            print("Invalid response format.")
+    else:
+        try:
+            if isinstance(data, dict):  # If it's already a dictionary
+                df = pd.DataFrame([data])  # Wrap in a list to ensure correct DataFrame structure
+            else:  # Assume it's a file path
+                with open(data, 'r', encoding='utf-8') as file:
+                    json_data = json.load(file)
+                df = pd.DataFrame(json_data if isinstance(json_data, list) else [json_data])
+            
+            df.to_csv('output.csv', index=False)
+            print(f"CSV file saved successfully as 'output.csv'")
+        except Exception as e:
+            print(f"Error: {e}")
+
 
 @click.group()
 def cli():
@@ -63,8 +48,7 @@ def cli():
 
 # HEALTH CHECK
 @click.command()
-@click.option("--format", default=DEFAULT_FORMAT, help="Output format: csv or json")
-def healthcheck(format):
+def healthcheck():
     "Check system health"
     token = load_token()
     if not token:
@@ -75,14 +59,13 @@ def healthcheck(format):
     response = requests.get(url, headers={"X-OBSERVATORY-AUTH": token})
 
     if response.status_code == 200:
-        print_output(response.json(), format)
+        print_output(response.json(), "json")
     else:
         print(f"Error: {response.json().get('info', 'Unknown error')}")
 
 # RESET PASSES
 @click.command()
-@click.option("--format", default=DEFAULT_FORMAT, help="Output format: csv or json")
-def resetpasses(format):
+def resetpasses():
     "Reset all pass data"
     token = load_token()
     if not token:
@@ -93,14 +76,13 @@ def resetpasses(format):
     response = requests.post(url, headers={"X-OBSERVATORY-AUTH": token})
 
     if response.status_code == 200:
-        print_output(response.json(), format)
+        print_output(response.json(), "json")
     else:
         print(f"Error: {response.json().get('info', 'Unknown error')}")
 
 # RESET STATIONS
 @click.command()
-@click.option("--format", default=DEFAULT_FORMAT, help="Output format: csv or json")
-def resetstations(format):
+def resetstations():
     "Reset all toll station data"
     token = load_token()
     if not token:
@@ -111,7 +93,7 @@ def resetstations(format):
     response = requests.post(url, headers={"X-OBSERVATORY-AUTH": token})
 
     if response.status_code == 200:
-        print_output(response.json(), format)
+        print_output(response.json(), "json")
     else:
         print(f"Error: {response.json().get('info', 'Unknown error')}")
 
@@ -138,7 +120,6 @@ def login(username, passw):
 
 # LOGOUT
 @click.command()
-@click.option("--format", default=DEFAULT_FORMAT, help="Output format: csv or json")
 def logout():
     "User logout"
     token = load_token()
@@ -149,7 +130,7 @@ def logout():
     response = requests.post(url, headers={"X-OBSERVATORY-AUTH": token})
     if response.status_code == 204:
         delete_token()
-        print_output(response.json(), format)
+        print_output(response.json(), "json")
     else:
         print(f"Error: {response.json().get('info', 'Unknown error')}")
 
@@ -199,7 +180,8 @@ def passanalysis(stationop, tagop, date_from, date_to, format):
 @click.option("--tagop", required=True, help="Tag Operator ID")
 @click.option("--from", "date_from", required=True, help="Start date in YYYYMMDD")
 @click.option("--to", "date_to", required=True, help="End date in YYYYMMDD")
-def passescost(stationop, tagop, date_from, date_to):
+@click.option("--format", default=DEFAULT_FORMAT, help="Output format: csv or json")
+def passescost(stationop, tagop, date_from, date_to, format):
     "Retrieve pass cost between two operators"
     token = load_token()
     if not token:
@@ -208,7 +190,7 @@ def passescost(stationop, tagop, date_from, date_to):
     url = f"{API_BASE_URL}/passesCost/{stationop}/{tagop}/{date_from}/{date_to}"
     response = requests.get(url, headers={"X-OBSERVATORY-AUTH": token})
     if response.status_code == 200:
-        print_output(response.json(), "json")
+        print_output(response.json(), format)
     else:
         print(f"Error: {response.json().get('info', 'Unknown error')}")
         
@@ -217,7 +199,8 @@ def passescost(stationop, tagop, date_from, date_to):
 @click.option("--opid", required=True, help="Operator ID")
 @click.option("--from", "date_from", required=True, help="Start date in YYYYMMDD")
 @click.option("--to", "date_to", required=True, help="End date in YYYYMMDD")
-def chargesby(opid, date_from, date_to):
+@click.option("--format", default=DEFAULT_FORMAT, help="Output format: csv or json")
+def chargesby(opid, date_from, date_to, format):
     "Retrieve charges from other operators"
     token = load_token()
     if not token:
@@ -226,7 +209,7 @@ def chargesby(opid, date_from, date_to):
     url = f"{API_BASE_URL}/chargesBy/{opid}/{date_from}/{date_to}"
     response = requests.get(url, headers={"X-OBSERVATORY-AUTH": token})
     if response.status_code == 200:
-        print_output(response.json(), "json")
+        print_output(response.json(), format)
     else:
         print(f"Error: {response.json().get('info', 'Unknown error')}")
 
@@ -245,6 +228,11 @@ def admin(addpasses, source, usermod, username, passw, users):
         print("Error: Not authenticated. Please log in first.")
         exit(401)
 
+    selected_options = sum([addpasses, usermod, users])
+    if selected_options > 1:
+        print("Error: You cannot use multiple admin options at the same time.")
+        exit(1)
+
     if addpasses:
         if not source:
             print("Error: --addpasses requires --source <CSV file>")
@@ -252,10 +240,7 @@ def admin(addpasses, source, usermod, username, passw, users):
         url = f"{API_BASE_URL}/admin/addpasses"
         with open(source, "rb") as f:
             response = requests.post(url, headers={"X-OBSERVATORY-AUTH": token}, files={"file": f})
-        if response.status_code == 200:
-            print("Pass data successfully uploaded.")
-        else:
-            print(f"Error: {response.json().get('info', 'Unknown error')}")
+        print_output(response.json(), "json")
 
     elif usermod:
         if not username or not passw:
