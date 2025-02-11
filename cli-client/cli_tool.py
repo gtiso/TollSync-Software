@@ -5,7 +5,7 @@ import csv
 import os
 import pandas as pd
 
-API_BASE_URL = "http://127.0.0.1:9115"
+API_BASE_URL = "http://127.0.0.1:9115/api"
 DEFAULT_FORMAT = "csv"
 TOKEN_FILE = "auth_token.txt"
 
@@ -130,7 +130,7 @@ def logout():
     response = requests.post(url, headers={"X-OBSERVATORY-AUTH": token})
     if response.status_code == 204:
         delete_token()
-        print_output(response.json(), "json")
+        print("Logout Successful.")
     else:
         print(f"Error: {response.json().get('info', 'Unknown error')}")
 

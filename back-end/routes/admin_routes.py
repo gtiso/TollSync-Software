@@ -10,15 +10,28 @@ from models.user import User
 from config.settings import Config
 from dateutil import parser
 import csv
+import sys
+import pandas as pd
 
 admin_bp = Blueprint("admin", __name__)
 
+def print_csv(data):
+    writer = csv.DictWriter(sys.stdout, fieldnames=data.keys())
+    writer.writeheader()
+    writer.writerow(data)
+
 # HealthCheck Endpoint
-@admin_bp.route('/admin/healthcheck', methods=['GET'])
+@admin_bp.route('/api/admin/healthcheck', methods=['GET'])
 @token_required
 def healthcheck(current_user):
+    format_type = request.args.get("format", "json").lower()
+    
     if current_user.role != 'admin':
-        return jsonify({"status": "failed", "dbconnection": "Admin access required!"}), 401
+        response = {"status": "failed", "dbconnection": "Admin access required!"}
+        if format_type == 'csv':
+            return pd.read_json(response).to_csv('output.csv', encoding='utf-8', index=False), 401
+        else: 
+            return jsonify(response), 401  
     try:
         db.session.execute(text('SELECT 1'))
         n_stations = db.session.query(TollStation).count()
@@ -35,7 +48,7 @@ def healthcheck(current_user):
         return jsonify({"status": "failed", "dbconnection": str(e)}), 401
 
 # ResetStations Endpoint
-@admin_bp.route('/admin/resetstations', methods=['POST'])
+@admin_bp.route('/api/admin/resetstations', methods=['POST'])
 @token_required
 def reset_stations(current_user):
     if current_user.role != 'admin':
@@ -74,7 +87,7 @@ def reset_stations(current_user):
         return jsonify({"status": "failed", "info": str(e)}), 400
 
 # ResetPasses Endpoint
-@admin_bp.route('/admin/resetpasses', methods=['POST'])
+@admin_bp.route('/api/admin/resetpasses', methods=['POST'])
 @token_required
 def reset_passes(current_user):
     if current_user.role != 'admin':
@@ -97,7 +110,7 @@ def reset_passes(current_user):
         return jsonify({"status": "failed", "info": str(e)}), 400
 
 # AddPasses Endpoint
-@admin_bp.route('/admin/addpasses', methods=['POST'])
+@admin_bp.route('/api/admin/addpasses', methods=['POST'])
 @token_required
 def add_passes(current_user):
     if current_user.role != 'admin':
@@ -134,7 +147,7 @@ def add_passes(current_user):
         return jsonify({"status": "failed", "info": str(e)}), 400
     
 # Endpoint to create or modify a user (--usermod)
-@admin_bp.route('/admin/usermod', methods=['POST'])
+@admin_bp.route('/api/admin/usermod', methods=['POST'])
 @token_required
 def usermod(current_user):
     if current_user.role != 'admin':
@@ -160,7 +173,7 @@ def usermod(current_user):
 
 
 # Endpoint to list all users (--users)
-@admin_bp.route('/admin/users', methods=['GET'])
+@admin_bp.route('/api/admin/users', methods=['GET'])
 @token_required
 def list_users(current_user):
     if current_user.role != 'admin':

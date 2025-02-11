@@ -9,7 +9,7 @@ from utils.auth import token_required
 auth_bp = Blueprint("auth", __name__)
 
 # Login Endpoint
-@auth_bp.route('/login', methods=['POST'])
+@auth_bp.route('/api/login', methods=['POST'])
 def login():
     username = request.form.get('username')
     password = request.form.get('password')
@@ -30,7 +30,7 @@ def login():
         return jsonify({"message": "Invalid credentials"}), 401
 
 # Logout Endpoint (Client-sided)
-@auth_bp.route('/logout', methods=['POST'])
+@auth_bp.route('/api/logout', methods=['POST'])
 @token_required
 def logout(current_user):
-    return ('', 204) 
+    return jsonify({"message": ""}), 204

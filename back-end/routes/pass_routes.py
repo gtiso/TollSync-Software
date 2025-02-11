@@ -11,7 +11,7 @@ from config.db import db
 pass_bp = Blueprint("pass", __name__)
 
 # TollStationPasses Endpoint
-@pass_bp.route('/tollStationPasses/<tollStationID>/<date_from>/<date_to>', methods=['GET'])
+@pass_bp.route('/api/tollStationPasses/<tollStationID>/<date_from>/<date_to>', methods=['GET'])
 def toll_station_passes(tollStationID, date_from, date_to):
     start_date = parser.parse(date_from)
     end_date = parser.parse(date_to)
@@ -52,7 +52,7 @@ def toll_station_passes(tollStationID, date_from, date_to):
     return jsonify(response)
 
 # PassAnalysis Endpoint
-@pass_bp.route('/passAnalysis/<stationOpID>/<tagOpID>/<date_from>/<date_to>', methods=['GET'])
+@pass_bp.route('/api/passAnalysis/<stationOpID>/<tagOpID>/<date_from>/<date_to>', methods=['GET'])
 @token_required
 def pass_analysis(current_user, stationOpID, tagOpID, date_from, date_to):
     start_date = parser.parse(date_from)
@@ -60,6 +60,11 @@ def pass_analysis(current_user, stationOpID, tagOpID, date_from, date_to):
     
     if not start_date or not end_date:
         return jsonify({"status": "failed", "info": "Invalid date format. Use YYYYMMDD"}), 400
+    
+    station = TollStation.query.filter_by(OpID=stationOpID).first()
+    tag = TollStation.query.filter_by(OpID=tagOpID).first()
+    if not station or not tag:
+        return jsonify({"status": "failed", "info": "Toll operator not found"}), 400
     
     passes = Pass.query.join(TollStation, Pass.tollID == TollStation.TollID)
     passes = passes.filter(
@@ -91,7 +96,7 @@ def pass_analysis(current_user, stationOpID, tagOpID, date_from, date_to):
     return jsonify(response)
 
 # PassesCost Endpoint
-@pass_bp.route('/passesCost/<tollOpID>/<tagOpID>/<date_from>/<date_to>', methods=['GET'])
+@pass_bp.route('/api/passesCost/<tollOpID>/<tagOpID>/<date_from>/<date_to>', methods=['GET'])
 @token_required
 def passes_cost(current_user, tollOpID, tagOpID, date_from, date_to):
     start_date = parser.parse(date_from)
@@ -99,6 +104,11 @@ def passes_cost(current_user, tollOpID, tagOpID, date_from, date_to):
     
     if not start_date or not end_date:
         return jsonify({"status": "failed", "info": "Invalid date format. Use YYYYMMDD"}), 400
+    
+    station = TollStation.query.filter_by(OpID=tollOpID).first()
+    tag = TollStation.query.filter_by(OpID=tagOpID).first()
+    if not station or not tag:
+        return jsonify({"status": "failed", "info": "Toll operator not found"}), 400
     
     query = db.session.query(
         func.count(Pass.passID).label("nPasses"),
@@ -126,7 +136,7 @@ def passes_cost(current_user, tollOpID, tagOpID, date_from, date_to):
     return jsonify(response)
 
 # ChargesBy Endpoint
-@pass_bp.route('/chargesBy/<tollOpID>/<date_from>/<date_to>', methods=['GET'])
+@pass_bp.route('/api/chargesBy/<tollOpID>/<date_from>/<date_to>', methods=['GET'])
 @token_required
 def charges_by(current_user, tollOpID, date_from, date_to):
     start_date = parser.parse(date_from)
@@ -134,6 +144,10 @@ def charges_by(current_user, tollOpID, date_from, date_to):
     
     if not start_date or not end_date:
         return jsonify({"status": "failed", "info": "Invalid date format. Use YYYYMMDD"}), 400
+
+    station = TollStation.query.filter_by(OpID=tollOpID).first()
+    if not station:
+        return jsonify({"status": "failed", "info": "Toll operator not found"}), 400
     
     query = db.session.query(
         Pass.tagHomeID.label("visitingOpID"),
