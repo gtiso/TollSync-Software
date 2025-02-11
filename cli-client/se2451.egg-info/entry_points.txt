@@ -1,0 +1,2 @@
+[console_scripts]
+se2451 = cli_tool:cli

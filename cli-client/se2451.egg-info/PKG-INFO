@@ -1,0 +1,6 @@
+Metadata-Version: 2.2
+Name: se2451
+Version: 1.0
+Requires-Dist: click
+Requires-Dist: requests
+Dynamic: requires-dist
