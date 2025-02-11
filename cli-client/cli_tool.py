@@ -153,6 +153,7 @@ def logout():
     else:
         print(f"Error: {response.json().get('info', 'Unknown error')}")
 
+# TOLLSTATIONPASSES
 @click.command()
 @click.option("--station", required=True, help="Station ID")
 @click.option("--from", "date_from", required=True, help="Start date in YYYYMMDD")
@@ -172,6 +173,7 @@ def tollstationpasses(station, date_from, date_to, format):
     else:
         print(f"Error: {response.json().get('info', 'Unknown error')}")
 
+# PASSANALYSIS
 @click.command()
 @click.option("--stationop", required=True, help="Station Operator ID")
 @click.option("--tagop", required=True, help="Tag Operator ID")
@@ -191,12 +193,12 @@ def passanalysis(stationop, tagop, date_from, date_to, format):
     else:
         print(f"Error: {response.json().get('info', 'Unknown error')}")
 
+# PASSESCOST
 @click.command()
 @click.option("--stationop", required=True, help="Station Operator ID")
 @click.option("--tagop", required=True, help="Tag Operator ID")
 @click.option("--from", "date_from", required=True, help="Start date in YYYYMMDD")
 @click.option("--to", "date_to", required=True, help="End date in YYYYMMDD")
-@click.option("--format", default=DEFAULT_FORMAT, help="Output format: csv or json")
 def passescost(stationop, tagop, date_from, date_to):
     "Retrieve pass cost between two operators"
     token = load_token()
@@ -206,15 +208,15 @@ def passescost(stationop, tagop, date_from, date_to):
     url = f"{API_BASE_URL}/passesCost/{stationop}/{tagop}/{date_from}/{date_to}"
     response = requests.get(url, headers={"X-OBSERVATORY-AUTH": token})
     if response.status_code == 200:
-        print_output(response.json(), format)
+        print_output(response.json(), "json")
     else:
         print(f"Error: {response.json().get('info', 'Unknown error')}")
         
+# CHARGESBY
 @click.command()
 @click.option("--opid", required=True, help="Operator ID")
 @click.option("--from", "date_from", required=True, help="Start date in YYYYMMDD")
 @click.option("--to", "date_to", required=True, help="End date in YYYYMMDD")
-@click.option("--format", default=DEFAULT_FORMAT, help="Output format: csv or json")
 def chargesby(opid, date_from, date_to):
     "Retrieve charges from other operators"
     token = load_token()
@@ -224,10 +226,11 @@ def chargesby(opid, date_from, date_to):
     url = f"{API_BASE_URL}/chargesBy/{opid}/{date_from}/{date_to}"
     response = requests.get(url, headers={"X-OBSERVATORY-AUTH": token})
     if response.status_code == 200:
-        print_output(response.json(), format)
+        print_output(response.json(), "json")
     else:
         print(f"Error: {response.json().get('info', 'Unknown error')}")
 
+# ADMIN
 @click.command()
 @click.option("--addpasses", is_flag=True, help="Upload pass data from a CSV file")
 @click.option("--source", type=click.Path(exists=True), help="CSV file path (required with --addpasses)")
