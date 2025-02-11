@@ -56,9 +56,9 @@ def create_admin():
             db.session.add(admin)
             db.session.commit()
             
-def create_user():
-        if not User.query.filter_by(username='user').first():
-            user = User(username='user', password_hash=generate_password_hash('user', method='pbkdf2:sha256'), role='user')
+def create_user(name, password):
+        if not User.query.filter_by(username=name).first():
+            user = User(username=name, password_hash=generate_password_hash(password, method='pbkdf2:sha256'), role='user')
             db.session.add(user)
             db.session.commit()
 
@@ -70,5 +70,5 @@ if __name__ == "__main__":
         db.create_all()
         load_tollstations_from_csv()
         create_admin()
-        create_user()
+        create_user('user1','user1')
     app.run(debug=True, port=9115)

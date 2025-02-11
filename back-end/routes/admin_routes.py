@@ -107,8 +107,6 @@ def add_passes(current_user):
         return jsonify({"status": "failed", "info": "No file provided"}), 400
     
     file = request.files['file']
-    if file.filename != 'passes-sample.csv':
-        return jsonify({"status": "failed", "info": "Invalid file name"}), 400
     
     try:
         upload_folder = os.path.abspath("uploads")  
