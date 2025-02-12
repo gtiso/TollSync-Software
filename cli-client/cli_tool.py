@@ -265,6 +265,27 @@ def admin(addpasses, source, usermod, username, passw, users, format):
     else:
         print("Error: No valid admin option provided. Use --addpasses, --usermod, or --users.")
 
+# CAR PASS (FIRST USE CASE)
+@click.command()
+@click.option("--tollid", required=True, help="Toll station ID")
+@click.option("--tagref", required=True, help="Driver's toll card (tag)")
+@click.option("--vehicle", required=True, type=int, help="1: Motorcycle, 2: Car, 3: Car with Trailer, 4: Trucks")
+@click.option("--format", type=str, default="csv", help="Specify the response format (json or csv).")
+def carpass(tollid, tagref, vehicle, format):
+    token = load_token()
+    if not token:
+        print("Error: Not authenticated. Please log in first.")
+        exit(401)
+
+    normalized_format = "json" if format.lower() == "json" else "csv"
+    url = f"{API_BASE_URL}/recordPass/{tollid}/{tagref}/{vehicle}?format={normalized_format}"
+
+    response = requests.post(url, headers={"X-OBSERVATORY-AUTH": token})
+    if response.status_code == 200:
+        print(response.text)
+    else:
+        print("Pass was not acknowledged by the backend.")  
+
 cli.add_command(resetpasses)
 cli.add_command(resetstations)
 cli.add_command(healthcheck)
@@ -275,6 +296,7 @@ cli.add_command(passanalysis)
 cli.add_command(passescost)
 cli.add_command(chargesby)
 cli.add_command(admin)
+cli.add_command(carpass)
 
 if __name__ == "__main__":
     cli()

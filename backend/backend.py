@@ -8,6 +8,8 @@ from config.settings import Config
 from routes.auth_routes import auth_bp
 from routes.admin_routes import admin_bp
 from routes.pass_routes import pass_bp
+from routes.carpass_routes import carpass_bp
+from routes.getopid_routes import getopid_bp
 from models.tag import Tag
 from werkzeug.security import generate_password_hash
 from sqlalchemy import text
@@ -21,6 +23,8 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(pass_bp)
+    app.register_blueprint(carpass_bp)
+    app.register_blueprint(getopid_bp)
     
     return app
 
