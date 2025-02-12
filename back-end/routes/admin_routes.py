@@ -1,10 +1,12 @@
 from flask import Blueprint, jsonify, request
 from config.db import db
 from utils.auth import token_required
+from utils.tagfiller import populate_tags_from_passes
 from werkzeug.security import generate_password_hash
 from sqlalchemy import text
 import os
 from models.passes import Pass
+from models.tag import Tag
 from models.tollstation import TollStation
 from models.user import User
 from config.settings import Config
@@ -139,6 +141,7 @@ def reset_passes(current_user):
             return jsonify(data), 401
     try:
         db.session.query(Pass).delete()
+        db.session.query(Tag).delete()
         db.session.commit()
         
         # Επαναφορά admin user
@@ -215,6 +218,7 @@ def add_passes(current_user):
                 db.session.add(new_pass)
             db.session.commit()
         os.remove(file_path)
+        populate_tags_from_passes()
         if format_type == "csv":
             writer.writerow(["status"])
             writer.writerow(["OK"])

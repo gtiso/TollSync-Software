@@ -8,7 +8,9 @@ from config.settings import Config
 from routes.auth_routes import auth_bp
 from routes.admin_routes import admin_bp
 from routes.pass_routes import pass_bp
+from models.tag import Tag
 from werkzeug.security import generate_password_hash
+from sqlalchemy import text
 
 def create_app():
     app = Flask(__name__)
@@ -51,16 +53,16 @@ def load_tollstations_from_csv():
         db.session.commit()
 
 def create_admin(name, password):
-        if not User.query.filter_by(username=name).first():
-            admin = User(username=name, password_hash=generate_password_hash(password, method='pbkdf2:sha256'), role='admin')
-            db.session.add(admin)
-            db.session.commit()
+    if not User.query.filter_by(username=name).first():
+        admin = User(username=name, password_hash=generate_password_hash(password, method='pbkdf2:sha256'), role='admin')
+        db.session.add(admin)
+        db.session.commit()
             
-def create_user(name, password):
-        if not User.query.filter_by(username=name).first():
-            user = User(username=name, password_hash=generate_password_hash(password, method='pbkdf2:sha256'), role='user')
-            db.session.add(user)
-            db.session.commit()
+def create_user(name, password, op):
+    if not User.query.filter_by(username=name).first():
+        user = User(username=name, password_hash=generate_password_hash(password, method='pbkdf2:sha256'), role='user', OpID=op)
+        db.session.add(user)
+        db.session.commit()
 
 app = create_app()
 
@@ -70,12 +72,12 @@ if __name__ == "__main__":
         db.create_all()
         load_tollstations_from_csv()
         create_admin('admin', 'freepasses4all')
-        create_user('customercare@aegeanmotorway.gr','toll')
-        create_user('eoae@egnatia.gr','toll')
-        create_user('info@gefyra.gr','toll')
-        create_user('customercare@kentrikiodos.gr','toll')
-        create_user('info@moreas.com.gr','toll')
-        create_user('customercare@attikesdiadromes.gr','toll')
-        create_user('info@neaodos.gr','toll')
-        create_user('customercare@olympiaoperation.gr','toll')
+        create_user('customercare@aegeanmotorway.gr','toll','AM')
+        create_user('eoae@egnatia.gr','toll','EG')
+        create_user('info@gefyra.gr','toll','GE')
+        create_user('customercare@kentrikiodos.gr','toll','KO')
+        create_user('info@moreas.com.gr','toll','MO')
+        create_user('customercare@attikesdiadromes.gr','toll','NAO')
+        create_user('info@neaodos.gr','toll','NO')
+        create_user('customercare@olympiaoperation.gr','toll','OO')
     app.run(debug=True, port=9115)
