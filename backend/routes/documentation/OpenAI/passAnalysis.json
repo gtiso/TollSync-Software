@@ -1,0 +1,50 @@
+{
+  "nPasses": 5,
+  "passList": [
+    {
+      "passCharge": 1.6,
+      "passID": 661,
+      "passIndex": 1,
+      "stationID": "EG21",
+      "tagID": "AMH9SDBDW",
+      "timestamp": "2022-01-10 05:53"
+    },
+    {
+      "passCharge": 1.2,
+      "passID": 725,
+      "passIndex": 2,
+      "stationID": "EG15",
+      "tagID": "AMHJ7XVG0",
+      "timestamp": "2022-01-11 01:03"
+    },
+    {
+      "passCharge": 1.8,
+      "passID": 752,
+      "passIndex": 3,
+      "stationID": "EG26",
+      "tagID": "AMHJ7XVG0",
+      "timestamp": "2022-01-11 08:19"
+    },
+    {
+      "passCharge": 1.2,
+      "passID": 757,
+      "passIndex": 4,
+      "stationID": "EG14",
+      "tagID": "AMH9SDBDW",
+      "timestamp": "2022-01-11 10:32"
+    },
+    {
+      "passCharge": 2.0,
+      "passID": 758,
+      "passIndex": 5,
+      "stationID": "EG33",
+      "tagID": "AMHJ7XVG0",
+      "timestamp": "2022-01-11 10:36"
+    }
+  ],
+  "periodFrom": "2022-01-10",
+  "periodTo": "2022-01-12",
+  "requestTimestamp": "2025-02-12 21:52",
+  "stationOpID": "EG",
+  "tagOpID": "AM"
+}
