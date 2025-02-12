@@ -1,50 +1,105 @@
 import requests
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.http import JsonResponse
 
 FLASK_BACKEND_URL = "http://127.0.0.1:9115"
+AUTH_TOKEN = None  # Store authentication token globally
 
-# Your login credentials
-USERNAME = "admin"
-PASSWORD = "freepasses4all"
+def usermod(request):
+    """Creates or updates a user."""
+    global AUTH_TOKEN
+    if not AUTH_TOKEN:
+        login_to_backend(request)  # Ensure login if no token is stored
 
-def get_auth_token():
-    """Logs in to Flask and retrieves JWT token."""
-    login_url = f"{FLASK_BACKEND_URL}/api/login"
-    payload = {"username": USERNAME, "password": PASSWORD}
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
 
-    response = requests.post(login_url, data=payload)
+        url = f"{FLASK_BACKEND_URL}/api/admin/usermod"
+        headers = {"X-OBSERVATORY-AUTH": AUTH_TOKEN}
+        payload = {"username": username, "password": password}
 
+        response = requests.post(url, json=payload, headers=headers)
+        return JsonResponse(response.json(), status=response.status_code)
+
+    return render(request, "usermod.html")
+
+def list_users(request):
+    """Fetches the list of users."""
+    global AUTH_TOKEN
+    if not AUTH_TOKEN:
+        login_to_backend(None)  # Ensure login if no token is stored
+
+    url = f"{FLASK_BACKEND_URL}/api/admin/users"
+    headers = {"X-OBSERVATORY-AUTH": AUTH_TOKEN}
+
+    response = requests.get(url, headers=headers)
     if response.status_code == 200:
-        token = response.json().get("token")
-        print(f"Received Token: {token}")  # Debugging output
-        return token
-    else:
-        print(f"Login Failed: {response.json()}")  # Debugging output
-        return None
+        return JsonResponse(response.json())
+    return JsonResponse({"error": "Failed to fetch users"}, status=response.status_code)
 
-def fetch_data():
-    """Fetches healthcheck data using the JWT token."""
-    token = get_auth_token()  # First, login to get a token
+def login_to_backend(request):
+    """Shows login form and logs in the user if form is submitted."""
+    global AUTH_TOKEN
+
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+
+        login_url = f"{FLASK_BACKEND_URL}/api/login"
+        payload = {"username": username, "password": password}
+
+        response = requests.post(login_url, data=payload)
+        
+        if response.status_code == 200:
+            AUTH_TOKEN = response.json().get("token")  # Store token
+            request.session["auth_token"] = AUTH_TOKEN  # Store in session
+            return redirect("home")  # Redirect to home page
+        else:
+            return render(request, "login.html", {"error": "Invalid credentials"})
+
+    return render(request, "login.html")  # Show login form
+
+
+def logout_from_backend(request):
+    """Logs out the user by invalidating the session."""
+    global AUTH_TOKEN
+    if AUTH_TOKEN:
+        logout_url = f"{FLASK_BACKEND_URL}/api/logout"
+        headers = {"X-OBSERVATORY-AUTH": AUTH_TOKEN}
+
+        response = requests.post(logout_url, headers=headers)
+        if response.status_code == 204:
+            AUTH_TOKEN = None
+            request.session.flush()  # Clear session data
+            return redirect("login")
     
-    if not token:
-        return {"error": "Authentication failed. No token received."}
+    return JsonResponse({"error": "Logout failed"}, status=400)
+
+
+def fetch_healthcheck():
+    """Fetches healthcheck data using the JWT token."""
+    global AUTH_TOKEN
+    if not AUTH_TOKEN:
+        return {"error": "User not authenticated"}
 
     url = f"{FLASK_BACKEND_URL}/api/admin/healthcheck"
-    headers = {"X-OBSERVATORY-AUTH": token}  # Use the token in the headers}
+    headers = {"X-OBSERVATORY-AUTH": AUTH_TOKEN}
 
     try:
-        print(f"Sending request to: {url} with token: {token[:10]}...")  # Debugging output
         response = requests.get(url, headers=headers, timeout=5)
-        print(f"Response status: {response.status_code}")
-
         if response.status_code == 200:
             return response.json()
         return {"error": f"Backend returned {response.status_code}"}
     
     except requests.exceptions.RequestException as e:
-        print(f"Error connecting to Flask: {e}")
         return {"error": str(e)}
 
 def home(request):
-    data = fetch_data()
-    return render(request, 'home.html', {"data": data})
+    """Home page displaying backend health status."""
+    global AUTH_TOKEN
+    if not AUTH_TOKEN:
+        return redirect("login")  # Redirect to login if not authenticated
+
+    data = fetch_healthcheck()
+    return render(request, "home.html", {"data": data})
