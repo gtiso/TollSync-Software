@@ -1,12 +1,10 @@
 import click
 import requests
-import json
+import io
 import csv
 import os
-import pandas as pd
 
 API_BASE_URL = "http://127.0.0.1:9115/api"
-DEFAULT_FORMAT = "csv"
 TOKEN_FILE = "auth_token.txt"
 
 def save_token(token):
@@ -23,24 +21,6 @@ def delete_token():
     if os.path.exists(TOKEN_FILE):
         os.remove(TOKEN_FILE)
 
-def print_output(data, output_format):
-    if output_format == "json":
-        print(json.dumps(data, indent=4))
-    else:
-        try:
-            if isinstance(data, dict):  # If it's already a dictionary
-                df = pd.DataFrame([data])  # Wrap in a list to ensure correct DataFrame structure
-            else:  # Assume it's a file path
-                with open(data, 'r', encoding='utf-8') as file:
-                    json_data = json.load(file)
-                df = pd.DataFrame(json_data if isinstance(json_data, list) else [json_data])
-            
-            df.to_csv('output.csv', index=False)
-            print(f"CSV file saved successfully as 'output.csv'")
-        except Exception as e:
-            print(f"Error: {e}")
-
-
 @click.group()
 def cli():
     "Command Line Interface for Toll System"
@@ -48,98 +28,116 @@ def cli():
 
 # HEALTH CHECK
 @click.command()
-def healthcheck():
+@click.option("--format", type=str, default="csv", help="Specify the response format (json or csv).")
+def healthcheck(format):
     "Check system health"
     token = load_token()
     if not token:
         print("Error: Not authenticated. Please log in first.")
         exit(401)
 
-    url = f"{API_BASE_URL}/admin/healthcheck"
+    normalized_format = "json" if format.lower() == "json" else "csv"
+    url = f"{API_BASE_URL}/admin/healthcheck?format={normalized_format}"
     response = requests.get(url, headers={"X-OBSERVATORY-AUTH": token})
 
     if response.status_code == 200:
-        print_output(response.json(), "json")
+        print(response.text)
     else:
-        print(f"Error: {response.json().get('info', 'Unknown error')}")
+        print(response.text)
 
 # RESET PASSES
 @click.command()
-def resetpasses():
+@click.option("--format", type=str, default="csv", help="Specify the response format (json or csv).")
+def resetpasses(format):
     "Reset all pass data"
     token = load_token()
     if not token:
         print("Error: Not authenticated. Please log in first.")
         exit(401)
 
-    url = f"{API_BASE_URL}/admin/resetpasses"
+    normalized_format = "json" if format.lower() == "json" else "csv"
+    url = f"{API_BASE_URL}/admin/resetpasses?format={normalized_format}"
     response = requests.post(url, headers={"X-OBSERVATORY-AUTH": token})
 
     if response.status_code == 200:
-        print_output(response.json(), "json")
+        print(response.text)
     else:
-        print(f"Error: {response.json().get('info', 'Unknown error')}")
+        print(response.text)
 
 # RESET STATIONS
 @click.command()
-def resetstations():
+@click.option("--format", type=str, default="csv", help="Specify the response format (json or csv).")
+def resetstations(format):
     "Reset all toll station data"
     token = load_token()
     if not token:
         print("Error: Not authenticated. Please log in first.")
         exit(401)
 
-    url = f"{API_BASE_URL}/admin/resetstations"
+    normalized_format = "json" if format.lower() == "json" else "csv"
+    url = f"{API_BASE_URL}/admin/resetstations?format={normalized_format}"
     response = requests.post(url, headers={"X-OBSERVATORY-AUTH": token})
 
     if response.status_code == 200:
-        print_output(response.json(), "json")
+        print(response.text)
     else:
-        print(f"Error: {response.json().get('info', 'Unknown error')}")
+        print(response.text)
 
 # LOGIN
 @click.command()
 @click.option("--username", required=True, help="Username")
 @click.option("--passw", required=True, help="Password")
-def login(username, passw):
-    "User login"
-    url = f"{API_BASE_URL}/login"
+@click.option("--format", type=str, default="csv", help="Specify the response format (json or csv).")
+def login(username, passw, format):
+    """User login"""
+    normalized_format = "json" if format.lower() == "json" else "csv"
+    url = f"{API_BASE_URL}/login?format={normalized_format}"
     response = requests.post(url, data={"username": username, "password": passw})
-    data = response.json()
-    if "token" in data and response.status_code == 200:
-        save_token(data["token"])
-        print("Login Successful.")
-    elif response.status_code == 401:
-        print(f"Error: {response.json().get('message', 'Unknown error')}")
-        return
+
+    if response.status_code == 200:
+        content_type = response.headers.get("Content-Type", "").lower()
+
+        if "application/json" in content_type:
+            # Parse JSON response
+            data = response.json()
+            token = data.get("token")
+        else:
+            # Assume CSV format and parse it
+            csv_reader = csv.reader(io.StringIO(response.text))
+            rows = list(csv_reader)
+
+            if len(rows) > 1 and len(rows[1]) > 0:  # Ensure there is a second row
+                token = rows[1][0]  # Assuming the token is the first value in the second row
+
+        if token:
+            save_token(token)
+        print(response.text)
     else:
-        try:
-            print(f"Error: {response.json().get('message', 'Unknown error')}")
-        except requests.exceptions.JSONDecodeError:
-            print("Error: Unexpected response from server.")
+        print(response.text)
 
 # LOGOUT
 @click.command()
-def logout():
+@click.option("--format", type=str, default="csv", help="Specify the response format (json or csv).")
+def logout(format):
     "User logout"
     token = load_token()
     if not token:
         print("Error: Not logged in.")
         return
-    url = f"{API_BASE_URL}/logout"
+    
+    normalized_format = "json" if format.lower() == "json" else "csv"
+    url = f"{API_BASE_URL}/logout?format={normalized_format}"
     response = requests.post(url, headers={"X-OBSERVATORY-AUTH": token})
     if response.status_code == 204:
         delete_token()
         print("Logout Successful.")
-    else:
-        print(f"Error: {response.json().get('info', 'Unknown error')}")
 
 # TOLLSTATIONPASSES
 @click.command()
 @click.option("--station", required=True, help="Station ID")
 @click.option("--from", "date_from", required=True, help="Start date in YYYYMMDD")
 @click.option("--to", "date_to", required=True, help="End date in YYYYMMDD")
-@click.option("--format", default=DEFAULT_FORMAT, help="Output format: csv or json")
+@click.option("--format", type=str, default="csv", help="Specify the response format (json or csv).")
 def tollstationpasses(station, date_from, date_to, format):
     "Retrieve toll station passes"
     token = load_token()
@@ -147,12 +145,13 @@ def tollstationpasses(station, date_from, date_to, format):
         print("Error: Not authenticated. Please log in first.")
         exit(401)
 
-    url = f"{API_BASE_URL}/tollStationPasses/{station}/{date_from}/{date_to}"
+    normalized_format = "json" if format.lower() == "json" else "csv"
+    url = f"{API_BASE_URL}/tollStationPasses/{station}/{date_from}/{date_to}?format={normalized_format}"
     response = requests.get(url, headers={"X-OBSERVATORY-AUTH": token})
     if response.status_code == 200:
-        print_output(response.json(), format)
+        print(response.text)
     else:
-        print(f"Error: {response.json().get('info', 'Unknown error')}")
+        print(response.text)
 
 # PASSANALYSIS
 @click.command()
@@ -160,19 +159,21 @@ def tollstationpasses(station, date_from, date_to, format):
 @click.option("--tagop", required=True, help="Tag Operator ID")
 @click.option("--from", "date_from", required=True, help="Start date in YYYYMMDD")
 @click.option("--to", "date_to", required=True, help="End date in YYYYMMDD")
-@click.option("--format", default=DEFAULT_FORMAT, help="Output format: csv or json")
+@click.option("--format", type=str, default="csv", help="Specify the response format (json or csv).")
 def passanalysis(stationop, tagop, date_from, date_to, format):
     "Retrieve pass analysis between operators"
     token = load_token()
     if not token:
         print("Error: Not authenticated. Please log in first.")
         exit(401)
-    url = f"{API_BASE_URL}/passAnalysis/{stationop}/{tagop}/{date_from}/{date_to}"
+
+    normalized_format = "json" if format.lower() == "json" else "csv"
+    url = f"{API_BASE_URL}/passAnalysis/{stationop}/{tagop}/{date_from}/{date_to}?format={normalized_format}"
     response = requests.get(url, headers={"X-OBSERVATORY-AUTH": token})
     if response.status_code == 200:
-        print_output(response.json(), format)
+        print(response.text)
     else:
-        print(f"Error: {response.json().get('info', 'Unknown error')}")
+        print(response.text)
 
 # PASSESCOST
 @click.command()
@@ -180,38 +181,42 @@ def passanalysis(stationop, tagop, date_from, date_to, format):
 @click.option("--tagop", required=True, help="Tag Operator ID")
 @click.option("--from", "date_from", required=True, help="Start date in YYYYMMDD")
 @click.option("--to", "date_to", required=True, help="End date in YYYYMMDD")
-@click.option("--format", default=DEFAULT_FORMAT, help="Output format: csv or json")
+@click.option("--format", type=str, default="csv", help="Specify the response format (json or csv).")
 def passescost(stationop, tagop, date_from, date_to, format):
     "Retrieve pass cost between two operators"
     token = load_token()
     if not token:
         print("Error: Not authenticated. Please log in first.")
         exit(401)
-    url = f"{API_BASE_URL}/passesCost/{stationop}/{tagop}/{date_from}/{date_to}"
+
+    normalized_format = "json" if format.lower() == "json" else "csv"
+    url = f"{API_BASE_URL}/passesCost/{stationop}/{tagop}/{date_from}/{date_to}?format={normalized_format}"
     response = requests.get(url, headers={"X-OBSERVATORY-AUTH": token})
     if response.status_code == 200:
-        print_output(response.json(), format)
+        print(response.text)
     else:
-        print(f"Error: {response.json().get('info', 'Unknown error')}")
+        print(response.text)
         
 # CHARGESBY
 @click.command()
 @click.option("--opid", required=True, help="Operator ID")
 @click.option("--from", "date_from", required=True, help="Start date in YYYYMMDD")
 @click.option("--to", "date_to", required=True, help="End date in YYYYMMDD")
-@click.option("--format", default=DEFAULT_FORMAT, help="Output format: csv or json")
+@click.option("--format", type=str, default="csv", help="Specify the response format (json or csv).")
 def chargesby(opid, date_from, date_to, format):
     "Retrieve charges from other operators"
     token = load_token()
     if not token:
         print("Error: Not authenticated. Please log in first.")
         exit(401)
-    url = f"{API_BASE_URL}/chargesBy/{opid}/{date_from}/{date_to}"
+    
+    normalized_format = "json" if format.lower() == "json" else "csv"
+    url = f"{API_BASE_URL}/chargesBy/{opid}/{date_from}/{date_to}?format={normalized_format}"
     response = requests.get(url, headers={"X-OBSERVATORY-AUTH": token})
     if response.status_code == 200:
-        print_output(response.json(), format)
+        print(response.text)
     else:
-        print(f"Error: {response.json().get('info', 'Unknown error')}")
+        print(response.text)
 
 # ADMIN
 @click.command()
@@ -221,12 +226,15 @@ def chargesby(opid, date_from, date_to, format):
 @click.option("--username", help="Username (required with --usermod)")
 @click.option("--passw", help="Password (required with --usermod)")
 @click.option("--users", is_flag=True, help="List all users")
-def admin(addpasses, source, usermod, username, passw, users):
+@click.option("--format", type=str, default="csv", help="Specify the response format (json or csv).")
+def admin(addpasses, source, usermod, username, passw, users, format):
     """Admin tasks: Upload pass data, modify users, list users"""
     token = load_token()
     if not token:
         print("Error: Not authenticated. Please log in first.")
         exit(401)
+
+    normalized_format = "json" if format.lower() == "json" else "csv"
 
     selected_options = sum([addpasses, usermod, users])
     if selected_options > 1:
@@ -237,23 +245,23 @@ def admin(addpasses, source, usermod, username, passw, users):
         if not source:
             print("Error: --addpasses requires --source <CSV file>")
             exit(1)
-        url = f"{API_BASE_URL}/admin/addpasses"
+        url = f"{API_BASE_URL}/admin/addpasses?format={normalized_format}"
         with open(source, "rb") as f:
             response = requests.post(url, headers={"X-OBSERVATORY-AUTH": token}, files={"file": f})
-        print_output(response.json(), "json")
+        print(response.text)
 
     elif usermod:
         if not username or not passw:
             print("Error: --usermod requires --username and --passw.")
             exit(1)
-        url = f"{API_BASE_URL}/admin/usermod"
+        url = f"{API_BASE_URL}/admin/usermod?format={normalized_format}"
         response = requests.post(url, headers={"X-OBSERVATORY-AUTH": token}, json={"username": username, "password": passw})
-        print_output(response.json(), "json")
+        print(response.text)
 
     elif users:
-        url = f"{API_BASE_URL}/admin/users"
+        url = f"{API_BASE_URL}/admin/users?format={normalized_format}"
         response = requests.get(url, headers={"X-OBSERVATORY-AUTH": token})
-        print_output(response.json(), "json")
+        print(response.text)
     else:
         print("Error: No valid admin option provided. Use --addpasses, --usermod, or --users.")
 
