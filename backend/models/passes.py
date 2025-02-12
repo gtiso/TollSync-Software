@@ -7,3 +7,4 @@ class Pass(db.Model):
     tagRef = db.Column(db.String(50), nullable=False)
     tagHomeID = db.Column(db.String(10), nullable=False)
     charge = db.Column(db.Float, nullable=False)
+    paid = db.Column(db.Integer, nullable=False, default=0)
