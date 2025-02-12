@@ -1,0 +1,37 @@
+{
+  "nPasses": 3,
+  "passList": [
+    {
+      "passCharge": 2.3,
+      "passID": 438,
+      "passIndex": 1,
+      "passType": "visitor",
+      "tagID": "NORCBPLJD",
+      "tagProvider": "NO",
+      "timestamp": "2022-01-07 10:29"
+    },
+    {
+      "passCharge": 2.3,
+      "passID": 608,
+      "passIndex": 2,
+      "passType": "home",
+      "tagID": "OO1B0Z3NX",
+      "tagProvider": "OO",
+      "timestamp": "2022-01-09 17:56"
+    },
+    {
+      "passCharge": 2.3,
+      "passID": 747,
+      "passIndex": 3,
+      "passType": "home",
+      "tagID": "OOZSJ49IT",
+      "tagProvider": "OO",
+      "timestamp": "2022-01-11 06:38"
+    }
+  ],
+  "periodFrom": "2022-01-07",
+  "periodTo": "2022-01-12",
+  "requestTimestamp": "2025-02-12 21:51",
+  "stationID": "OO01",
+  "stationOperator": "OO"
+}

@@ -1,0 +1,7 @@
+{
+  "dbconnection": "mysql+pymysql://user:user@localhost/tollsync",
+  "n_passes": 0,
+  "n_stations": 253,
+  "n_tags": 0,
+  "status": "OK"
+}

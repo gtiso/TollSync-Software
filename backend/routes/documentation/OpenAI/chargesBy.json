@@ -1,0 +1,23 @@
+{
+  "periodFrom": "2022-01-10",
+  "periodTo": "2022-01-12",
+  "requestTimestamp": "2025-02-12 21:53",
+  "tollOpID": "AM",
+  "vOpList": [
+    {
+      "nPasses": 3,
+      "passesCost": 7.0,
+      "visitingOpID": "EG"
+    },
+    {
+      "nPasses": 3,
+      "passesCost": 9.999999761581421,
+      "visitingOpID": "NAO"
+    },
+    {
+      "nPasses": 3,
+      "passesCost": 7.8999998569488525,
+      "visitingOpID": "OO"
+    }
+  ]
+}
