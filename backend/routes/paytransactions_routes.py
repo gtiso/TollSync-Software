@@ -14,7 +14,7 @@ transactions_bp = Blueprint("transactions", __name__)
 # PayTransactions Endpoint
 @transactions_bp.route('/api/payTransactions/<tollOpID>/<tagOpID>/<date_from>/<date_to>', methods=['POST'])
 @token_required
-def paytransactions(tollOpID, tagOpID, date_from, date_to):
+def paytransactions(current_user, tollOpID, tagOpID, date_from, date_to):
     format_type = request.args.get("format", "json").lower()
     csv_output = io.StringIO()
     writer = csv.writer(csv_output)
