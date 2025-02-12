@@ -1,13 +1,16 @@
-<!-- webapp/templates/home.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Frontend Home</title>
+    <title>Backend Health</title>
 </head>
 <body>
     <h1>Backend Health Status</h1>
-    <p>{{ data }}</p>
+    <p><strong>Status:</strong> {{ data.status }}</p>
+    <p><strong>Database Connection:</strong> {{ data.dbconnection }}</p>
+    <p><strong>Number of Stations:</strong> {{ data.n_stations }}</p>
+    <p><strong>Number of Passes:</strong> {{ data.n_passes }}</p>
+    <p><strong>Number of Tags:</strong> {{ data.n_tags }}</p>
 </body>
 </html>
