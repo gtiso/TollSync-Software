@@ -50,9 +50,9 @@ def load_tollstations_from_csv():
             db.session.add(new_station)
         db.session.commit()
 
-def create_admin():
-        if not User.query.filter_by(username='admin').first():
-            admin = User(username='admin', password_hash=generate_password_hash('freepasses4all', method='pbkdf2:sha256'), role='admin')
+def create_admin(name, password):
+        if not User.query.filter_by(username=name).first():
+            admin = User(username=name, password_hash=generate_password_hash(password, method='pbkdf2:sha256'), role='admin')
             db.session.add(admin)
             db.session.commit()
             
@@ -69,6 +69,13 @@ if __name__ == "__main__":
         db.drop_all()
         db.create_all()
         load_tollstations_from_csv()
-        create_admin()
-        create_user('user1','user1')
+        create_admin('admin', 'freepasses4all')
+        create_user('customercare@aegeanmotorway.gr','toll')
+        create_user('eoae@egnatia.gr','toll')
+        create_user('info@gefyra.gr','toll')
+        create_user('customercare@kentrikiodos.gr','toll')
+        create_user('info@moreas.com.gr','toll')
+        create_user('customercare@attikesdiadromes.gr','toll')
+        create_user('info@neaodos.gr','toll')
+        create_user('customercare@olympiaoperation.gr','toll')
     app.run(debug=True, port=9115)
