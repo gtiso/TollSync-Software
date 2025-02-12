@@ -193,10 +193,9 @@ def pay_transactions(request):
         response = requests.post(url, headers=headers)
 
         if response.status_code == 200:
-            print("Payment Successful:", response.text)  # Debugging output
-            return JsonResponse({"message": "Payment processed successfully, amount reset to zero."}, status=200)
+            data = response.json()
+            return JsonResponse({"message": data.get("message", "Payment processed successfully!")}, status=200)
         else:
-            print(f"Payment Error: {response.status_code} - {response.text}")  # Debugging output
             return JsonResponse({"error": "Payment failed, please try again."}, status=400)
 
     return JsonResponse({"error": "Invalid request method."}, status=405)
