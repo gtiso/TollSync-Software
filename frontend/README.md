@@ -1,20 +1,20 @@
----------------FRONT-END----------------------
-1)Python(Django)
-2)HTML
-3)JS
+# FRONTEND
 
-------------------CONTENTS-------------------
+1. Python (django)
+2. HTML
+3. JS
+
+# CONTENTS
+
 A user-friendly UI that corresponds to the needs 
 of the 1st and 2nd use case that was given to us
 
------------------INSTALLATION-----------------
+# INSTALLATIONS
 
 pip install Django
 
+# RUN
 
-
-
------------------RUN--------------------------
 In order to run the front-end you need to open 
 a CMD window with a directory that leads to the
 'frontend' folder of our project.
