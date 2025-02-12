@@ -24,4 +24,6 @@ urlpatterns = [
     path("admin/healthcheck/", views.home, name="healthcheck"),
     path("admin/users/", views.list_users, name="list_users"),  # Ensure this line is correct
     path("admin/usermod/", views.usermod, name="usermod"),
+    path("create-user/", views.create_user, name="create_user"),
+    path("create-admin/", views.create_admin, name="create_admin"),
 ]

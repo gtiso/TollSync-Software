@@ -53,13 +53,13 @@ def login_to_backend(request):
         
         if response.status_code == 200:
             AUTH_TOKEN = response.json().get("token")  # Store token
-            request.session["auth_token"] = AUTH_TOKEN  # Store in session
+            request.session["auth_token"] = AUTH_TOKEN  # Store in session for redirection
+            request.session["username"] = username
             return redirect("home")  # Redirect to home page
-        else:
-            return render(request, "login.html", {"error": "Invalid credentials"})
+        
+        return render(request, "login.html", {"error": "Invalid credentials"})
 
     return render(request, "login.html")  # Show login form
-
 
 def logout_from_backend(request):
     """Logs out the user by invalidating the session."""
@@ -76,6 +76,43 @@ def logout_from_backend(request):
     
     return JsonResponse({"error": "Logout failed"}, status=400)
 
+def create_user(request):
+    """Creates a new user."""
+    global AUTH_TOKEN
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+
+        url = f"{FLASK_BACKEND_URL}/api/admin/usermod"
+        headers = {"X-OBSERVATORY-AUTH": AUTH_TOKEN}
+        payload = {"username": username, "password": password}
+
+        response = requests.post(url, json=payload, headers=headers)
+        if response.status_code == 200:
+            return redirect("home")  # Redirect to home after creating a user
+
+        return render(request, "create_user.html", {"error": "Failed to create user"})
+
+    return render(request, "create_user.html")
+
+def create_admin(request):
+    """Creates a new admin."""
+    global AUTH_TOKEN
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+
+        url = f"{FLASK_BACKEND_URL}/api/admin/usermod"
+        headers = {"X-OBSERVATORY-AUTH": AUTH_TOKEN}
+        payload = {"username": username, "password": password, "role": "admin"}  # Setting role to admin
+
+        response = requests.post(url, json=payload, headers=headers)
+        if response.status_code == 200:
+            return redirect("home")  # Redirect to home after creating an admin
+
+        return render(request, "create_admin.html", {"error": "Failed to create admin"})
+
+    return render(request, "create_admin.html")
 
 def fetch_healthcheck():
     """Fetches healthcheck data using the JWT token."""
