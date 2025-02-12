@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect
 from django.http import JsonResponse
 
 FLASK_BACKEND_URL = "http://127.0.0.1:9115"
-AUTH_TOKEN = None  # Store authentication token globally
+
 
 def usermod(request):
     """Creates or updates a user."""
@@ -39,9 +39,7 @@ def list_users(request):
     return JsonResponse({"error": "Failed to fetch users"}, status=response.status_code)
 
 def login_to_backend(request):
-    """Shows login form and logs in the user if form is submitted."""
-    global AUTH_TOKEN
-
+    """Logs in and redirects users to the dashboard."""
     if request.method == "POST":
         username = request.POST.get("username")
         password = request.POST.get("password")
@@ -52,29 +50,104 @@ def login_to_backend(request):
         response = requests.post(login_url, data=payload)
         
         if response.status_code == 200:
-            AUTH_TOKEN = response.json().get("token")  # Store token
-            request.session["auth_token"] = AUTH_TOKEN  # Store in session for redirection
-            request.session["username"] = username
-            return redirect("home")  # Redirect to home page
+            request.session["auth_token"] = response.json().get("token")  # Store token in session
+            request.session["username"] = username  # Store the actual username
+            request.session["is_authenticated"] = True  # Mark user as authenticated
+            return redirect("dashboard")  # Redirect to dashboard
         
         return render(request, "login.html", {"error": "Invalid credentials"})
 
     return render(request, "login.html")  # Show login form
 
 def logout_from_backend(request):
-    """Logs out the user by invalidating the session."""
-    global AUTH_TOKEN
-    if AUTH_TOKEN:
+    """Logs out and redirects to login."""
+    if request.session.get("auth_token"):
         logout_url = f"{FLASK_BACKEND_URL}/api/logout"
-        headers = {"X-OBSERVATORY-AUTH": AUTH_TOKEN}
+        headers = {"X-OBSERVATORY-AUTH": request.session["auth_token"]}
 
         response = requests.post(logout_url, headers=headers)
         if response.status_code == 204:
-            AUTH_TOKEN = None
             request.session.flush()  # Clear session data
             return redirect("login")
     
     return JsonResponse({"error": "Logout failed"}, status=400)
+
+def dashboard(request):
+    """Renders the dashboard only if the user is logged in."""
+    if not request.session.get("is_authenticated"):
+        return redirect("login")  # Redirect to login if not authenticated
+
+    username = request.session.get("username", "User")  # Get the logged-in username
+
+    return render(request, "dashboard.html", {"username": username})
+
+
+
+def api_passes_cost(request, tollOpID, tagOpID, date_from, date_to):
+    """Fetches Passes Cost data from Flask API and returns JSON."""
+    if not request.session.get("is_authenticated"):
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+
+    url = f"{FLASK_BACKEND_URL}/api/passesCost/{tollOpID}/{tagOpID}/{date_from}/{date_to}"
+    headers = {"X-OBSERVATORY-AUTH": request.session.get("auth_token")}
+
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        return JsonResponse(response.json(), status=200)
+
+    return JsonResponse({"error": "Failed to fetch data"}, status=response.status_code)
+
+
+def passes_cost_view(request):
+    """Displays the form and filtered Passes Cost data."""
+    if not request.session.get("is_authenticated"):
+        return redirect("login")
+
+    data = None
+    if request.method == "POST":
+        tollOpID = request.POST.get("tollOpID")
+        tagOpID = request.POST.get("tagOpID")
+        date_from = request.POST.get("date_from")
+        date_to = request.POST.get("date_to")
+
+        url = f"{FLASK_BACKEND_URL}/api/passesCost/{tollOpID}/{tagOpID}/{date_from}/{date_to}"
+        headers = {"X-OBSERVATORY-AUTH": request.session.get("auth_token")}
+
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            data = response.json()
+
+    return render(request, "passes_cost.html", {"data": data})
+
+def charges_by(request, tollOpID, date_from, date_to):
+    """Fetches charges by operator."""
+    global AUTH_TOKEN
+    url = f"{FLASK_BACKEND_URL}/api/chargesBy/{tollOpID}/{date_from}/{date_to}"
+    headers = {"X-OBSERVATORY-AUTH": AUTH_TOKEN}
+
+    response = requests.get(url, headers=headers)
+    return JsonResponse(response.json(), status=response.status_code)
+
+
+def pass_analysis(request, stationOpID, tagOpID, date_from, date_to):
+    """Fetches pass analysis data."""
+    global AUTH_TOKEN
+    url = f"{FLASK_BACKEND_URL}/api/passAnalysis/{stationOpID}/{tagOpID}/{date_from}/{date_to}"
+    headers = {"X-OBSERVATORY-AUTH": AUTH_TOKEN}
+
+    response = requests.get(url, headers=headers)
+    return JsonResponse(response.json(), status=response.status_code)
+
+
+def toll_station_passes(request, tollStationID, date_from, date_to):
+    """Fetches toll station passes."""
+    global AUTH_TOKEN
+    url = f"{FLASK_BACKEND_URL}/api/tollStationPasses/{tollStationID}/{date_from}/{date_to}"
+    headers = {"X-OBSERVATORY-AUTH": AUTH_TOKEN}
+
+    response = requests.get(url, headers=headers)
+    return JsonResponse(response.json(), status=response.status_code)
 
 def create_user(request):
     """Creates a new user."""
@@ -133,10 +206,5 @@ def fetch_healthcheck():
         return {"error": str(e)}
 
 def home(request):
-    """Home page displaying backend health status."""
-    global AUTH_TOKEN
-    if not AUTH_TOKEN:
-        return redirect("login")  # Redirect to login if not authenticated
-
-    data = fetch_healthcheck()
-    return render(request, "home.html", {"data": data})
+    """Redirect users to the login page by default."""
+    return redirect("login")  # Redirect to login page
