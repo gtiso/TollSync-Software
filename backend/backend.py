@@ -10,10 +10,8 @@ from routes.admin_routes import admin_bp
 from routes.pass_routes import pass_bp
 from routes.carpass_routes import carpass_bp
 from routes.getopid_routes import getopid_bp
-from routes.paytransactions_routes import transactions_bp
-from models.tag import Tag
+from routes.transactions_routes import transactions_bp
 from werkzeug.security import generate_password_hash
-from sqlalchemy import text
 
 def create_app():
     app = Flask(__name__)

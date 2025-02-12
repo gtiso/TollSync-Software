@@ -42,17 +42,14 @@ def paytransactions(current_user, tollOpID, tagOpID, date_from, date_to):
         else:
             return jsonify(data), 400
     
-    station_alias = aliased(TollStation)
-
     db.session.query(Pass).filter(
+        TollStation.OpID == tollOpID,
         Pass.tagHomeID == tagOpID,
         Pass.timestamp >= start_date,
         Pass.timestamp <= end_date,
-        Pass.paid == 0,
-        db.session.query(station_alias.TollID)  # ✅ Ensures JOIN with TollStation
-        .filter(station_alias.TollID == Pass.tollID, station_alias.OpID == tollOpID)
-        .exists()
+        Pass.paid == 0  # Ensure only unpaid passes are updated
     ).update({"paid": 1}, synchronize_session=False)
+    db.session.commit()
 
     data = {"status": "OK", "message": "Passes records updated successfully."}
     if format_type == "csv":
