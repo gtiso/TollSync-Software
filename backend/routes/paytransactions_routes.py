@@ -11,13 +11,13 @@ import datetime
 transactions_bp = Blueprint("transactions", __name__)
 
 # PayTransactions Endpoint
-@transactions_bp.route('/api/payTransactions/<tollOpID>/<tagOpID>/<dateFrom>/<dateTo>', methods=['POST'])
-def paytransactions(tollOpID, tagOpID, dateFrom, dateTo):
+@transactions_bp.route('/api/payTransactions/<tollOpID>/<tagOpID>/<date_from>/<date_to>', methods=['POST'])
+def paytransactions(tollOpID, tagOpID, date_from, date_to):
     format_type = request.args.get("format", "json").lower()
     csv_output = io.StringIO()
     writer = csv.writer(csv_output)
-    start_date = parser.parse(dateFrom)
-    end_date = parser.parse(dateTo)
+    start_date = parser.parse(date_from)
+    end_date = parser.parse(date_to)
     
     if not start_date or not end_date:
         data = {"status": "failed", "info": "Invalid date format. Use YYYYMMDD"}
@@ -57,7 +57,7 @@ def paytransactions(tollOpID, tagOpID, dateFrom, dateTo):
         return jsonify(data), 200
     
 # GetTransactions Endpoint
-@transactions_bp.route('/api/getTransactions/<tollOpID>/<tagOpID>/<dateFrom>/<dateTo>', methods=['GET'])
+@transactions_bp.route('/api/getTransactions/<tollOpID>/<tagOpID>/<date_from>/<date_to>', methods=['GET'])
 def gettransactions(current_user, tollOpID, tagOpID, date_from, date_to):
     format_type = request.args.get("format", "json").lower()
     csv_output = io.StringIO()
