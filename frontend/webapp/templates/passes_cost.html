@@ -33,10 +33,9 @@
                         <label for="tollOpID" class="form-label">Toll Operator ID:</label>
                         <input type="text" id="tollOpID" name="tollOpID" class="form-control" required>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="tagOpID" class="form-label">Tag Operator ID:</label>
-                        <input type="text" id="tagOpID" name="tagOpID" class="form-control" required>
-                    </div>
+                    
+                    <input type="hidden" id="tagOpID" name="tagOpID" value="{{ op_id }}">  <!-- Hidden Field for OpID -->
+
                     <div class="col-md-6 mb-3">
                         <label for="date_from" class="form-label">Date From:</label>
                         <input type="date" id="date_from" name="date_from" class="form-control" required>
@@ -56,3 +55,4 @@
     </div>
 </body>
 </html>
+

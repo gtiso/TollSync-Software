@@ -5,6 +5,7 @@ from django.http import JsonResponse
 FLASK_BACKEND_URL = "http://127.0.0.1:9115"
 
 
+
 def usermod(request):
     """Creates or updates a user."""
     global AUTH_TOKEN
@@ -38,6 +39,18 @@ def list_users(request):
         return JsonResponse(response.json())
     return JsonResponse({"error": "Failed to fetch users"}, status=response.status_code)
 
+
+# Mock Function: Replace with real function to get OpID from database or script
+def get_op_id_for_user(username):
+    """Retrieve the OpID for a given username from the database or script."""
+    user_opid_mapping = {
+        "companyA": "101",
+        "companyB": "102",
+        "admin": "999",  # Example for admin user
+    }
+    return user_opid_mapping.get(username, "000")  # Default OpID if not found
+
+
 def login_to_backend(request):
     """Logs in and redirects users to the dashboard."""
     if request.method == "POST":
@@ -52,6 +65,7 @@ def login_to_backend(request):
         if response.status_code == 200:
             request.session["auth_token"] = response.json().get("token")  # Store token in session
             request.session["username"] = username  # Store the actual username
+            request.session["op_id"] = get_op_id_for_user(username)  # Store OpID in session
             request.session["is_authenticated"] = True  # Mark user as authenticated
             return redirect("dashboard")  # Redirect to dashboard
         
@@ -104,10 +118,12 @@ def passes_cost_view(request):
     if not request.session.get("is_authenticated"):
         return redirect("login")
 
+    op_id = request.session.get("op_id", "000")  # Get the user's OpID
+
     data = None
     if request.method == "POST":
         tollOpID = request.POST.get("tollOpID")
-        tagOpID = request.POST.get("tagOpID")
+        tagOpID = op_id  # Automatically set Tag Operator ID from session
         date_from = request.POST.get("date_from")
         date_to = request.POST.get("date_to")
 
@@ -118,7 +134,7 @@ def passes_cost_view(request):
         if response.status_code == 200:
             data = response.json()
 
-    return render(request, "passes_cost.html", {"data": data})
+    return render(request, "passes_cost.html", {"data": data, "op_id": op_id})
 
 
 
