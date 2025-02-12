@@ -29,7 +29,5 @@ urlpatterns = [
     path("dashboard/", views.dashboard, name="dashboard"),
     path("passes-cost/", views.passes_cost_view, name="passes_cost"),
     path("api/passes_cost/<str:tollOpID>/<str:tagOpID>/<str:date_from>/<str:date_to>/", views.api_passes_cost, name="api_passes_cost"),
-    path("api/chargesBy/<str:tollOpID>/<str:date_from>/<str:date_to>/", views.charges_by, name="charges_by"),
-    path("api/passAnalysis/<str:stationOpID>/<str:tagOpID>/<str:date_from>/<str:date_to>/", views.pass_analysis, name="pass_analysis"),
     path("api/tollStationPasses/<str:tollStationID>/<str:date_from>/<str:date_to>/", views.toll_station_passes, name="toll_station_passes"),
 ]

@@ -13,59 +13,42 @@
             margin: auto;
             padding-top: 50px;
         }
+        .card {
+            padding: 20px;
+            background: white;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2 class="text-center">Passes Cost</h2>
+        <h2 class="text-center mb-4">Passes Cost</h2>
 
-        <form method="post" class="mt-3">
-            {% csrf_token %}
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="tollOpID" class="form-label">Toll Operator ID:</label>
-                    <input type="text" id="tollOpID" name="tollOpID" class="form-control" required>
+        <div class="card">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="tollOpID" class="form-label">Toll Operator ID:</label>
+                        <input type="text" id="tollOpID" name="tollOpID" class="form-control" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="tagOpID" class="form-label">Tag Operator ID:</label>
+                        <input type="text" id="tagOpID" name="tagOpID" class="form-control" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="date_from" class="form-label">Date From:</label>
+                        <input type="date" id="date_from" name="date_from" class="form-control" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="date_to" class="form-label">Date To:</label>
+                        <input type="date" id="date_to" name="date_to" class="form-control" required>
+                    </div>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label for="tagOpID" class="form-label">Tag Operator ID:</label>
-                    <input type="text" id="tagOpID" name="tagOpID" class="form-control" required>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="date_from" class="form-label">Date From:</label>
-                    <input type="date" id="date_from" name="date_from" class="form-control" required>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="date_to" class="form-label">Date To:</label>
-                    <input type="date" id="date_to" name="date_to" class="form-control" required>
-                </div>
-            </div>
-            <button type="submit" class="btn btn-primary w-100">Get Passes Cost</button>
-        </form>
-
-        {% if data %}
-            <table class="table table-bordered mt-4">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Toll Station</th>
-                        <th>Tag Operator</th>
-                        <th>Charge</th>
-                        <th>Timestamp</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for pass in data.passes %}
-                    <tr>
-                        <td>{{ pass.tollID }}</td>
-                        <td>{{ pass.tagHomeID }}</td>
-                        <td>${{ pass.charge }}</td>
-                        <td>{{ pass.timestamp }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <p class="text-center mt-4">No data available. Please select a filter.</p>
-        {% endif %}
+                <button type="submit" class="btn btn-primary w-100">Get Passes Cost</button>
+            </form>
+        </div>
 
         <div class="mt-4 text-center">
             <a href="{% url 'dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>

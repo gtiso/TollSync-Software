@@ -88,7 +88,7 @@ def api_passes_cost(request, tollOpID, tagOpID, date_from, date_to):
     if not request.session.get("is_authenticated"):
         return JsonResponse({"error": "Unauthorized"}, status=401)
 
-    url = f"{FLASK_BACKEND_URL}/api/passesCost/{tollOpID}/{tagOpID}/{date_from}/{date_to}"
+    url = f"{FLASK_BACKEND_URL}/api/passes_cost/{tollOpID}/{tagOpID}/{date_from}/{date_to}"
     headers = {"X-OBSERVATORY-AUTH": request.session.get("auth_token")}
 
     response = requests.get(url, headers=headers)
@@ -111,7 +111,7 @@ def passes_cost_view(request):
         date_from = request.POST.get("date_from")
         date_to = request.POST.get("date_to")
 
-        url = f"{FLASK_BACKEND_URL}/api/passesCost/{tollOpID}/{tagOpID}/{date_from}/{date_to}"
+        url = f"{FLASK_BACKEND_URL}/api/passes_cost/{tollOpID}/{tagOpID}/{date_from}/{date_to}"
         headers = {"X-OBSERVATORY-AUTH": request.session.get("auth_token")}
 
         response = requests.get(url, headers=headers)
@@ -120,24 +120,6 @@ def passes_cost_view(request):
 
     return render(request, "passes_cost.html", {"data": data})
 
-def charges_by(request, tollOpID, date_from, date_to):
-    """Fetches charges by operator."""
-    global AUTH_TOKEN
-    url = f"{FLASK_BACKEND_URL}/api/chargesBy/{tollOpID}/{date_from}/{date_to}"
-    headers = {"X-OBSERVATORY-AUTH": AUTH_TOKEN}
-
-    response = requests.get(url, headers=headers)
-    return JsonResponse(response.json(), status=response.status_code)
-
-
-def pass_analysis(request, stationOpID, tagOpID, date_from, date_to):
-    """Fetches pass analysis data."""
-    global AUTH_TOKEN
-    url = f"{FLASK_BACKEND_URL}/api/passAnalysis/{stationOpID}/{tagOpID}/{date_from}/{date_to}"
-    headers = {"X-OBSERVATORY-AUTH": AUTH_TOKEN}
-
-    response = requests.get(url, headers=headers)
-    return JsonResponse(response.json(), status=response.status_code)
 
 
 def toll_station_passes(request, tollStationID, date_from, date_to):

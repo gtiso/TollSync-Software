@@ -10,7 +10,7 @@
             font-family: Arial, sans-serif;
         }
         .dashboard-container {
-            max-width: 800px;
+            max-width: 600px;
             margin: auto;
             padding-top: 50px;
         }
@@ -36,6 +36,7 @@
         }
         .card {
             transition: 0.3s;
+            text-align: center;
         }
         .card:hover {
             transform: scale(1.05);
@@ -45,51 +46,17 @@
 <body>
     <div class="container dashboard-container text-center">
         <div class="profile">
-            <div class="profile-pic">{{ username.0 }}</div>  <!-- Shows first letter -->
-            <h2>Welcome, {{ username }}!</h2>  <!-- Shows full username -->
+            <div class="profile-pic">{{ username.0 }}</div>
+            <h2>Welcome, {{ username }}!</h2>
         </div>
 
-        <div class="row">
-            <div class="col-md-6 mt-3">
-                <a href="{% url 'passes_cost' %}" class="text-decoration-none">
-                    <div class="card p-3 shadow">
-                        <h4 class="text-primary">Passes Cost</h4>
-                        <p>View toll pass costs with filters</p>
-                    </div>
-                </a>
-            </div>
-
-            <div class="col-md-6">
-                <a href="{% url 'charges_by' tollOpID='1' date_from='20240101' date_to='20241231' %}" class="text-decoration-none">
-                    <div class="card p-3 shadow">
-                        <h4 class="text-secondary">Charges By</h4>
-                        <p>See charges by toll operator</p>
-                    </div>
-                </a>
-            </div>
-
-            <div class="col-md-6 mt-3">
-                <a href="{% url 'pass_analysis' stationOpID='1' tagOpID='2' date_from='20240101' date_to='20241231' %}" class="text-decoration-none">
-                    <div class="card p-3 shadow">
-                        <h4 class="text-success">Pass Analysis</h4>
-                        <p>Analyze pass usage</p>
-                    </div>
-                </a>
-            </div>
-
-            <div class="col-md-6 mt-3">
-                <a href="{% url 'toll_station_passes' tollStationID='1' date_from='20240101' date_to='20241231' %}" class="text-decoration-none">
-                    <div class="card p-3 shadow">
-                        <h4 class="text-warning">Toll Station Passes</h4>
-                        <p>Check toll station activity</p>
-                    </div>
-                </a>
-            </div>
-
-            <div class="col-md-12 mt-4">
-                <a href="{% url 'logout' %}" class="btn btn-danger w-100">Logout</a>
-            </div>
+        <div class="card p-4 shadow mb-4">
+            <h4 class="text-primary">Passes Cost</h4>
+            <p>View and filter toll pass costs</p>
+            <a href="{% url 'passes_cost' %}" class="btn btn-primary">Go to Passes Cost</a>
         </div>
+
+        <a href="{% url 'logout' %}" class="btn btn-danger w-100">Logout</a>
     </div>
 </body>
 </html>
