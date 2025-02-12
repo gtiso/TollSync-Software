@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Passes Cost</title>
+    <title>Passes Cost Summary</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <style>
         body {
@@ -23,7 +23,7 @@
 </head>
 <body>
     <div class="container">
-        <h2 class="text-center mb-4">Passes Cost</h2>
+        <h2 class="text-center mb-4">Passes Cost Summary</h2>
 
         <div class="card">
             <form method="post">
@@ -31,11 +31,16 @@
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="tollOpID" class="form-label">Toll Operator ID:</label>
-                        <input type="text" id="tollOpID" name="tollOpID" class="form-control" required>
+                        <select id="tollOpID" name="tollOpID" class="form-control" required>
+                            <option value="" disabled selected>Select a Toll Operator</option>
+                            {% for operator in available_operators %}
+                            <option value="{{ operator }}">{{ operator }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
                     
                     <input type="hidden" id="tagOpID" name="tagOpID" value="{{ op_id }}">  <!-- Hidden Field for OpID -->
-
+            
                     <div class="col-md-6 mb-3">
                         <label for="date_from" class="form-label">Date From:</label>
                         <input type="date" id="date_from" name="date_from" class="form-control" required>
@@ -49,10 +54,66 @@
             </form>
         </div>
 
+        {% if data %}
+    <div class="mt-4">
+        <h4 class="text-center">Passes Cost Summary</h4>
+        <table class="table table-bordered mt-3">
+            <thead class="table-dark">
+                <tr>
+                    <th>Field</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Toll Operator ID</strong></td>
+                    <td>{{ data.Toll_Operator_ID }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Tag Operator ID</strong></td>
+                    <td>{{ data.Tag_Operator_ID }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Request Timestamp</strong></td>
+                    <td>{{ data.Request_Timestamp }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Period From</strong></td>
+                    <td>{{ data.Period_From }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Period To</strong></td>
+                    <td>{{ data.Period_To }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Number of Passes</strong></td>
+                    <td>{{ data.Number_of_Passes }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Total Passes Cost</strong></td>
+                    <td>${{ data.Total_Passes_Cost|floatformat:2 }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Payment Button -->
+        <form method="post" action="{% url 'pay_transactions' %}">
+            {% csrf_token %}
+            <input type="hidden" name="tollOpID" value="{{ data.Toll_Operator_ID }}">
+            <input type="hidden" name="date_from" value="{{ data.Period_From }}">
+            <input type="hidden" name="date_to" value="{{ data.Period_To }}">
+            <button type="submit" class="btn btn-success w-100 mt-3">Pay Now</button>
+        </form>
+
+    </div>
+{% else %}
+    <p class="text-center mt-4 text-danger">⚠️ No transactions found for the selected period.</p>
+{% endif %}
+    
+
         <div class="mt-4 text-center">
             <a href="{% url 'dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
         </div>
     </div>
 </body>
 </html>
-

@@ -28,6 +28,7 @@ urlpatterns = [
     path("create-admin/", views.create_admin, name="create_admin"),
     path("dashboard/", views.dashboard, name="dashboard"),
     path("passes-cost/", views.passes_cost_view, name="passes_cost"),
-    path("api/passes_cost/<str:tollOpID>/<str:tagOpID>/<str:date_from>/<str:date_to>/", views.api_passes_cost, name="api_passes_cost"),
-    path("api/tollStationPasses/<str:tollStationID>/<str:date_from>/<str:date_to>/", views.toll_station_passes, name="toll_station_passes"),
+    path("api/getTransactions/<tollOpID>/<tagOpID>/<date_from>/<date_to>/", views.api_passes_cost, name="api_passes_cost"),
+    path("api/tollStationPasses/<tollStationID>/<date_from>/<date_to>/", views.toll_station_passes, name="toll_station_passes"),
+    path("pay-transactions/", views.pay_transactions, name="pay_transactions"),
 ]

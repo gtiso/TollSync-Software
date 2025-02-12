@@ -1,6 +1,8 @@
 import requests
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
+from collections import defaultdict
+
 
 FLASK_BACKEND_URL = "http://127.0.0.1:9115"
 
@@ -40,16 +42,26 @@ def list_users(request):
     return JsonResponse({"error": "Failed to fetch users"}, status=response.status_code)
 
 
-# Mock Function: Replace with real function to get OpID from database or script
 def get_op_id_for_user(username):
-    """Retrieve the OpID for a given username from the database or script."""
-    user_opid_mapping = {
-        "companyA": "101",
-        "companyB": "102",
-        "admin": "999",  # Example for admin user
-    }
-    return user_opid_mapping.get(username, "000")  # Default OpID if not found
+    """Fetches the OpID for the given user."""
 
+    url = f"{FLASK_BACKEND_URL}/api/getOpID/{username}"
+
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            data = response.json()
+            if "OpID" in data:
+                return data["OpID"]
+            else:
+                print("Error: OpID not found in response")
+                return None
+        else:
+            print(f"Error fetching OpID: {response.status_code} - {response.text}")
+            return None
+    except Exception as e:
+        print(f"Exception occurred: {e}")
+        return None 
 
 def login_to_backend(request):
     """Logs in and redirects users to the dashboard."""
@@ -102,7 +114,7 @@ def api_passes_cost(request, tollOpID, tagOpID, date_from, date_to):
     if not request.session.get("is_authenticated"):
         return JsonResponse({"error": "Unauthorized"}, status=401)
 
-    url = f"{FLASK_BACKEND_URL}/api/passes_cost/{tollOpID}/{tagOpID}/{date_from}/{date_to}"
+    url = f"{FLASK_BACKEND_URL}/api/getTransactions/{tollOpID}/{tagOpID}/{date_from}/{date_to}"
     headers = {"X-OBSERVATORY-AUTH": request.session.get("auth_token")}
 
     response = requests.get(url, headers=headers)
@@ -114,29 +126,80 @@ def api_passes_cost(request, tollOpID, tagOpID, date_from, date_to):
 
 
 def passes_cost_view(request):
-    """Displays the form and filtered Passes Cost data."""
+    """Displays the form and processed Passes Cost data."""
     if not request.session.get("is_authenticated"):
         return redirect("login")
 
-    op_id = request.session.get("op_id", "000")  # Get the user's OpID
+    op_id = request.session.get("op_id")  # Get the user's OpID
+    all_operators = ["AM", "EG", "GE", "KO", "MO", "NAO", "NO"]  # Full list of operators
 
-    data = None
+    # Exclude the logged-in operator
+    available_operators = [op for op in all_operators if op != op_id]
+    result_data = None
+
     if request.method == "POST":
         tollOpID = request.POST.get("tollOpID")
         tagOpID = op_id  # Automatically set Tag Operator ID from session
         date_from = request.POST.get("date_from")
         date_to = request.POST.get("date_to")
 
-        url = f"{FLASK_BACKEND_URL}/api/passes_cost/{tollOpID}/{tagOpID}/{date_from}/{date_to}"
+        url = f"{FLASK_BACKEND_URL}/api/getTransactions/{tollOpID}/{tagOpID}/{date_from}/{date_to}"
         headers = {"X-OBSERVATORY-AUTH": request.session.get("auth_token")}
 
         response = requests.get(url, headers=headers)
+
+        print(response.text)
         if response.status_code == 200:
             data = response.json()
 
-    return render(request, "passes_cost.html", {"data": data, "op_id": op_id})
+            # Ensure required fields exist in response
+            if all(key in data for key in ["tollOpID", "tagOpID", "requestTimestamp", "periodFrom", "periodTo", "nPasses", "passesCost"]):
+                result_data = {
+                    "Toll_Operator_ID": data["tollOpID"],
+                    "Tag_Operator_ID": data["tagOpID"],
+                    "Request_Timestamp": data["requestTimestamp"],
+                    "Period_From": data["periodFrom"],
+                    "Period_To": data["periodTo"],
+                    "Number_of_Passes": data["nPasses"],
+                    "Total_Passes_Cost": data["passesCost"]
+                }
+            else:
+                print("Error: Missing required fields in API response")
 
+        else:
+            print(f"Error Fetching Data: {response.status_code} - {response.text}")  # Debugging output
 
+    return render(request, "passes_cost.html", {"data": result_data, "op_id": op_id, "op_id": op_id, "available_operators": available_operators})
+
+def pay_transactions(request):
+    """Processes payments for the passes cost and resets the total amount owed to zero."""
+    if not request.session.get("is_authenticated"):
+        return redirect("login")
+
+    op_id = request.session.get("op_id")  # Get the logged-in user's OpID
+
+    if request.method == "POST":
+        tollOpID = request.POST.get("tollOpID")  # The toll operator receiving payment
+        tagOpID = op_id  # The current user paying the amount
+        date_from = request.POST.get("date_from").replace("-", "")  # Convert date format
+        date_to = request.POST.get("date_to").replace("-", "")
+
+        # Construct API request URL to trigger the payment
+        url = f"{FLASK_BACKEND_URL}/api/payTransactions/{tollOpID}/{tagOpID}/{date_from}/{date_to}"
+        headers = {"X-OBSERVATORY-AUTH": request.session.get("auth_token")}
+
+        print("API Request URL for Payment:", url)  # Debugging output
+
+        response = requests.post(url, headers=headers)
+
+        if response.status_code == 200:
+            print("Payment Successful:", response.text)  # Debugging output
+            return JsonResponse({"message": "Payment processed successfully, amount reset to zero."}, status=200)
+        else:
+            print(f"Payment Error: {response.status_code} - {response.text}")  # Debugging output
+            return JsonResponse({"error": "Payment failed, please try again."}, status=400)
+
+    return JsonResponse({"error": "Invalid request method."}, status=405)
 
 def toll_station_passes(request, tollStationID, date_from, date_to):
     """Fetches toll station passes."""
