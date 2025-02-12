@@ -7,11 +7,13 @@ from models.tollstation import TollStation
 from config.db import db
 from sqlalchemy import func
 import datetime
+from utils.auth import token_required
 
 transactions_bp = Blueprint("transactions", __name__)
 
 # PayTransactions Endpoint
 @transactions_bp.route('/api/payTransactions/<tollOpID>/<tagOpID>/<date_from>/<date_to>', methods=['POST'])
+@token_required
 def paytransactions(tollOpID, tagOpID, date_from, date_to):
     format_type = request.args.get("format", "json").lower()
     csv_output = io.StringIO()
@@ -58,6 +60,7 @@ def paytransactions(tollOpID, tagOpID, date_from, date_to):
     
 # GetTransactions Endpoint
 @transactions_bp.route('/api/getTransactions/<tollOpID>/<tagOpID>/<date_from>/<date_to>', methods=['GET'])
+@token_required
 def gettransactions(current_user, tollOpID, tagOpID, date_from, date_to):
     format_type = request.args.get("format", "json").lower()
     csv_output = io.StringIO()
